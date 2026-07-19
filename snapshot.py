@@ -22,8 +22,8 @@ COLUMNS = [
     "date", "ticker", "price",
     "sig_momentum", "sig_curve", "sig_inventories", "sig_hormuz", "sig_spare",
     "hormuz_level", "risk_score", "weight_available",
-    "daily_dir", "daily_low", "daily_high",
-    "weekly_dir", "weekly_low", "weekly_high",
+    "daily_dir", "daily_center", "daily_low", "daily_high",
+    "weekly_dir", "weekly_center", "weekly_low", "weekly_high",
     "stale_signals",
 ]
 
@@ -64,14 +64,17 @@ def take_snapshot() -> pd.DataFrame:
         "risk_score": score,
         "weight_available": round(weight_avail, 2),
         "daily_dir": pred["daily"]["direction"],
+        "daily_center": pred["daily"]["center"],
         "daily_low": pred["daily"]["low"],
         "daily_high": pred["daily"]["high"],
         "weekly_dir": pred["weekly"]["direction"],
+        "weekly_center": pred["weekly"]["center"],
         "weekly_low": pred["weekly"]["low"],
         "weekly_high": pred["weekly"]["high"],
         "stale_signals": ";".join(s.key for s in all_signals if s.stale),
     }
     df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
+    df = df.reindex(columns=COLUMNS)
     sig.DATA_DIR.mkdir(exist_ok=True)
     df.to_csv(sig.SNAPSHOT_PATH, index=False)
     print(f"Snapshot {'updated' if replacing else 'saved'} for {today}: "
