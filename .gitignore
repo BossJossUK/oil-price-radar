@@ -1,0 +1,5 @@
+.venv/
+__pycache__/
+.streamlit/secrets.toml
+data/last_good.json
+.DS_Store
