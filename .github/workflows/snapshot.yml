@@ -2,7 +2,7 @@ name: Daily signal snapshot
 
 on:
   schedule:
-    - cron: "0 6 * * *"   # daily 06:00 UTC
+    - cron: "30 21 * * *"  # daily 05:30 Hong Kong time (HKT = UTC+8, no DST)
   workflow_dispatch: {}    # manual run button in the Actions tab
 
 permissions:

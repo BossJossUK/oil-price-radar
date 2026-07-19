@@ -50,8 +50,9 @@ streamlit run app.py
 
 ## 4. Daily snapshots & track record
 
-`.github/workflows/snapshot.yml` runs `snapshot.py` every day at **06:00 UTC**
-and commits that day's signals + prediction to `data/snapshots.csv`. Once the
+`.github/workflows/snapshot.yml` runs `snapshot.py` every day at **05:30
+Hong Kong time** (21:30 UTC — GitHub crons are defined in UTC) and commits
+that day's signals + prediction to `data/snapshots.csv`. Once the
 next day's actual price is known, the dashboard's collapsible **Track record**
 section shows the hit rate of past direction calls.
 

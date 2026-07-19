@@ -77,7 +77,8 @@ with st.sidebar:
 
     if st.button("📸 Log today's snapshot", width="stretch",
                  help="Appends today's signals & prediction to data/snapshots.csv "
-                      "(the GitHub Actions cron also does this daily at 06:00 UTC)."):
+                      "(the GitHub Actions cron also does this daily at 05:30 "
+                      "Hong Kong time). Re-logging the same day overwrites it."):
         os.environ["HORMUZ_LEVEL"] = hormuz_level
         import snapshot
         snapshot.take_snapshot()
@@ -231,7 +232,8 @@ with st.expander("📒 Track record — does this thing actually work?"):
 
     if snaps.empty:
         st.info("No snapshots yet. The GitHub Actions cron logs one every day "
-                "at 06:00 UTC, or press **Log today's snapshot** in the sidebar.")
+                "at 05:30 Hong Kong time, or press **Log today's snapshot** "
+                "in the sidebar.")
     else:
         trading_days = close.index.normalize()
 
