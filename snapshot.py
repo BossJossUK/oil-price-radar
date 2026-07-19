@@ -36,9 +36,13 @@ def take_snapshot() -> pd.DataFrame:
     else:
         df = pd.DataFrame(columns=COLUMNS)
 
-    if today in set(df["date"]):
-        print(f"Snapshot for {today} already exists — nothing to do.")
-        return df
+    # If today's row exists, replace it rather than skip: the 06:00 UTC cron
+    # logs first with the carried-forward Hormuz level, and a later manual
+    # "Log today's snapshot" (after actually eyeballing the strait) should
+    # win. Harmless for the cron itself — it runs once per day.
+    replacing = today in set(df["date"])
+    if replacing:
+        df = df[df["date"] != today]
 
     hormuz_level = os.environ.get("HORMUZ_LEVEL") or sig.last_hormuz_level()
     api_key = os.environ.get("EIA_API_KEY", "")
@@ -70,8 +74,10 @@ def take_snapshot() -> pd.DataFrame:
     df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
     sig.DATA_DIR.mkdir(exist_ok=True)
     df.to_csv(sig.SNAPSHOT_PATH, index=False)
-    print(f"Snapshot saved for {today}: price={row['price']} "
-          f"score={score} daily={row['daily_dir']} weekly={row['weekly_dir']}")
+    print(f"Snapshot {'updated' if replacing else 'saved'} for {today}: "
+          f"price={row['price']} score={score} "
+          f"daily={row['daily_dir']} weekly={row['weekly_dir']} "
+          f"hormuz={hormuz_level}")
     return df
 
 

@@ -1,2 +1,2 @@
 date,ticker,price,sig_momentum,sig_curve,sig_inventories,sig_hormuz,sig_spare,hormuz_level,risk_score,weight_available,daily_dir,daily_low,daily_high,weekly_dir,weekly_low,weekly_high,stale_signals
-2026-07-19,BZ=F,88.1,67.8,95.2,81.3,15.0,100.0,Normal flow,70.0,1.0,up,85.77,91.59,up,82.9,95.9,
+2026-07-19,BZ=F,88.1,67.8,95.2,81.3,95.0,100.0,Disrupted,86.0,1.0,up,86.24,92.06,up,83.94,96.95,
