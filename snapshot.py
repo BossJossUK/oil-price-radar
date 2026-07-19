@@ -20,7 +20,8 @@ import signals as sig
 
 COLUMNS = [
     "date", "ticker", "price",
-    "sig_momentum", "sig_curve", "sig_inventories", "sig_hormuz", "sig_spare",
+    "sig_momentum", "sig_curve", "sig_inventories", "sig_hormuz", "sig_bab",
+    "sig_spare",
     "hormuz_level", "risk_score", "weight_available",
     "daily_dir", "daily_center", "daily_low", "daily_high",
     "weekly_dir", "weekly_center", "weekly_low", "weekly_high",
@@ -59,7 +60,7 @@ def take_snapshot() -> pd.DataFrame:
         "ticker": label,
         "price": round(pred["price"], 2),
         **{f"sig_{k}": by_key[k].score for k in
-           ("momentum", "curve", "inventories", "hormuz", "spare")},
+           ("momentum", "curve", "inventories", "hormuz", "bab", "spare")},
         "hormuz_level": hormuz_level,
         "risk_score": score,
         "weight_available": round(weight_avail, 2),

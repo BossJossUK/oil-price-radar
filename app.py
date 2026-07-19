@@ -46,6 +46,11 @@ def load_inventories(api_key: str):
     return sig.signal_inventories(api_key)
 
 
+@st.cache_data(ttl=6 * 3600, show_spinner="Fetching Bab el-Mandeb transits…")
+def load_bab():
+    return sig.signal_bab_mandab()
+
+
 @st.cache_data(ttl=6 * 3600, show_spinner="Fetching OPEC spare capacity…")
 def load_spare(api_key: str):
     return sig.signal_spare_capacity(api_key)
@@ -110,6 +115,7 @@ all_signals = [
     load_curve(),
     load_inventories(key),
     sig.signal_hormuz(hormuz_level),
+    load_bab(),
     load_spare(key),
 ]
 risk_score, weight_avail = sig.compute_risk_score(all_signals)

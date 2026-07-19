@@ -5,15 +5,16 @@ of Brent crude and explains itself with a 0–100 **Oil Risk Score** built from
 five signals. It is a **procurement decision-support tool, not trading advice** —
 robustness and clarity over tick-by-tick precision.
 
-## The five signals
+## The six signals
 
 | # | Signal | Weight | Source |
 |---|--------|--------|--------|
-| 1 | Brent price level & 7-day momentum | 25 | Yahoo Finance `BZ=F` (falls back to `CL=F`) |
+| 1 | Brent price level & 7-day momentum | 20 | Yahoo Finance `BZ=F` (falls back to `CL=F`) |
 | 2 | Futures curve (backwardation vs contango) | 25 | Yahoo Finance dated contracts (front vs ~6 months out) |
 | 3 | US crude inventories vs 5-year average | 20 | EIA Open Data v2, weekly series `WCESTUS1` |
-| 4 | Strait of Hormuz shipping risk | 20 | Manual sidebar selector (AIS-API-ready stub) |
-| 5 | OPEC+ spare capacity | 10 | EIA STEO series `COPS_OPEC` (monthly) |
+| 4 | Strait of Hormuz shipping risk | 15 | Manual sidebar selector (AIS-API-ready stub) |
+| 5 | Bab el-Mandeb tanker flow | 10 | IMF PortWatch daily transit counts (~1 week lag) |
+| 6 | OPEC+ spare capacity | 10 | EIA STEO series `COPS_OPEC` (monthly) |
 
 Every fetch fails soft: if a source is down the last good value is shown with a
 🟠 `STALE` badge, and a signal with no data at all has its weight dropped and

@@ -37,12 +37,20 @@ EIA_BASE = "https://api.eia.gov/v2"
 EIA_FALLBACK_KEY = "DEMO_KEY"
 
 WEIGHTS = {
-    "momentum": 25,
+    "momentum": 20,
     "curve": 25,
     "inventories": 20,
-    "hormuz": 20,
+    "hormuz": 15,
+    "bab": 10,
     "spare": 10,
 }
+
+# IMF PortWatch: free daily AIS-derived chokepoint transit counts (~1 week lag)
+PORTWATCH_URL = ("https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/"
+                 "services/Daily_Chokepoints_Data/FeatureServer/0/query")
+# Bab el-Mandeb mean tanker transits/day Jan-Oct 2023, the last stretch before
+# the Red Sea attacks began — the "what normal used to look like" anchor.
+BAB_PRE_CRISIS_TANKERS = 26.0
 
 HORMUZ_LEVELS = {
     "Normal flow": 15,
@@ -290,7 +298,69 @@ def signal_hormuz(level: str) -> Signal:
                   WEIGHTS["hormuz"], float(score), detail, value=float(score))
 
 
-# ---------------------------------------------------------------- signal 5: spare capacity
+# ---------------------------------------------------------------- signal 5: Bab el-Mandeb
+
+def signal_bab_mandab() -> Signal:
+    """Oil tanker flow through the Bab el-Mandeb strait. Weight 10.
+
+    Source: IMF PortWatch daily transit counts (chokepoint4), free, ~1 week
+    lag. Two components, blended 60/40:
+      - chronic: last-7-day tanker average vs the pre-crisis norm of ~26/day
+        (100 at an 80% shortfall) — catches a structurally closed strait that
+        purely trailing baselines would normalize away;
+      - acute: last-7-day average vs the trailing 90-day median — catches a
+        fresh collapse against whatever the current regime is.
+    """
+    w = WEIGHTS["bab"]
+    try:
+        since = (datetime.now(timezone.utc) - timedelta(days=140)).strftime("%Y-%m-%d")
+        r = requests.get(PORTWATCH_URL, params={
+            "where": f"portid='chokepoint4' AND date >= '{since}'",
+            "outFields": "date,n_tanker",
+            "orderByFields": "date ASC",
+            "resultRecordCount": 2000,
+            "f": "json",
+        }, timeout=30)
+        r.raise_for_status()
+        feats = r.json()["features"]
+        vals = [f["attributes"]["n_tanker"] for f in feats
+                if f["attributes"]["n_tanker"] is not None]
+        if len(vals) < 40:
+            raise ValueError("PortWatch returned too little history")
+        last_date = feats[-1]["attributes"]["date"][:10]
+        recent7 = sum(vals[-7:]) / 7
+        trailing = sorted(vals[:-7])
+        trail_med = trailing[len(trailing) // 2]
+
+        chronic = _clamp((1 - recent7 / BAB_PRE_CRISIS_TANKERS) / 0.8 * 100)
+        acute = _clamp(50 - (recent7 / trail_med - 1) * 100) if trail_med else 50.0
+        score = round(0.6 * chronic + 0.4 * acute, 1)
+
+        vs_norm = (1 - recent7 / BAB_PRE_CRISIS_TANKERS) * 100
+        trend = ("falling further" if recent7 < trail_med * 0.85 else
+                 "recovering" if recent7 > trail_med * 1.15 else "steady")
+        state = ("severely disrupted" if vs_norm > 55 else
+                 "disrupted" if vs_norm > 25 else "near normal")
+        vs_word = (f"{vs_norm:.0f}% below" if vs_norm >= 0
+                   else f"{-vs_norm:.0f}% above")
+        detail = (f"Bab el-Mandeb {state}: {recent7:.0f} tankers/day "
+                  f"({vs_word} pre-crisis ~{BAB_PRE_CRISIS_TANKERS:.0f}/day), "
+                  f"{trend} vs 90-day trend (data to {last_date}, IMF PortWatch).")
+        _save_cache("bab", {"score": score, "detail": detail,
+                            "recent7": round(recent7, 1)})
+        return Signal("bab", "Bab el-Mandeb tanker flow", w, score, detail,
+                      value=round(recent7, 1))
+    except Exception:
+        cached = _cached("bab")
+        if cached:
+            return Signal("bab", "Bab el-Mandeb tanker flow", w,
+                          cached["score"], cached["detail"], stale=True,
+                          value=cached.get("recent7"))
+        return Signal("bab", "Bab el-Mandeb tanker flow", w, None,
+                      "IMF PortWatch unavailable — weight dropped.", stale=True)
+
+
+# ---------------------------------------------------------------- signal 6: spare capacity
 
 def signal_spare_capacity(api_key: str = "") -> Signal:
     """OPEC spare production capacity from EIA STEO (monthly). Weight 10."""
@@ -388,6 +458,7 @@ def gather_signals(hormuz_level: str, api_key: str = "",
         signal_curve(),
         signal_inventories(api_key),
         signal_hormuz(hormuz_level),
+        signal_bab_mandab(),
         signal_spare_capacity(api_key),
     ]
 
