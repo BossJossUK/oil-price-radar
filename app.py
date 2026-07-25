@@ -75,6 +75,14 @@ with st.sidebar:
              "API can replace it later.",
     )
 
+    st.subheader("Bab el-Mandeb check")
+    st.markdown(
+        "Scored automatically from IMF PortWatch (~1 week lag). "
+        "Eyeball the live picture when news is moving faster:\n"
+        "- [MarineTraffic — Bab el-Mandeb](https://www.marinetraffic.com/en/ais/home/centerx:43.4/centery:12.6/zoom:8)\n"
+        "- [VesselFinder — Bab el-Mandeb](https://www.vesselfinder.com/?lat=12.6&lon=43.4&zoom=8)"
+    )
+
     st.divider()
     if st.button("🔄 Refresh now", width="stretch"):
         st.cache_data.clear()
